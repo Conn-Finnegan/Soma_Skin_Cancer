@@ -1,0 +1,17 @@
+# Python venv
+venv/
+__pycache__/
+*.pyc
+
+# Dataset images
+data/
+
+# Model files
+models/*.pt
+
+# Output logs
+outputs/*.csv
+
+# System/IDE files
+.DS_Store
+.vscode/
