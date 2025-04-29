@@ -8,7 +8,7 @@ from torchvision.models import ResNet18_Weights
 from dataset import SkinLesionDataset
 import pandas as pd
 
-# Device setup
+# Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
@@ -18,13 +18,26 @@ OUTPUT_DIR = "outputs"
 os.makedirs(MODEL_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Transforms
-transform = transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()])
+# Augmented transform for training
+train_transform = transforms.Compose(
+    [
+        transforms.Resize((224, 224)),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomRotation(15),
+        transforms.ColorJitter(brightness=0.1, contrast=0.1),
+        transforms.ToTensor(),
+    ]
+)
+
+# Plain transform for validation
+val_transform = transforms.Compose(
+    [transforms.Resize((224, 224)), transforms.ToTensor()]
+)
 
 # Load datasets
 print("Loading datasets...")
-train_dataset = SkinLesionDataset("data/train.csv", transform=transform)
-val_dataset = SkinLesionDataset("data/val.csv", transform=transform)
+train_dataset = SkinLesionDataset("data/train.csv", transform=train_transform)
+val_dataset = SkinLesionDataset("data/val.csv", transform=val_transform)
 
 train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False)
@@ -32,20 +45,36 @@ val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False)
 print(f"Training samples: {len(train_dataset)}")
 print(f"Validation samples: {len(val_dataset)}")
 
-# Load ResNet18 and modify final layer
+# Load ResNet18 model
 print("Loading ResNet18 model...")
 model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
 model.fc = nn.Linear(model.fc.in_features, 2)
 model = model.to(device)
 
-# Class weights: penalise malignant errors more
-weights = torch.tensor([1.0, 2.5], dtype=torch.float).to(device)
+# --- Option A: Class-weighted CrossEntropyLoss ---
+weights = torch.tensor([1.0, 3.0], dtype=torch.float).to(device)
 criterion = nn.CrossEntropyLoss(weight=weights)
+
+# --- Option B: Focal Loss (uncomment below to use) ---
+# class FocalLoss(nn.Module):
+#     def __init__(self, alpha=1, gamma=2):
+#         super().__init__()
+#         self.alpha = alpha
+#         self.gamma = gamma
+#         self.ce = nn.CrossEntropyLoss(reduction='none')
+#     def forward(self, input, target):
+#         logp = self.ce(input, target)
+#         p = torch.exp(-logp)
+#         loss = self.alpha * (1 - p) ** self.gamma * logp
+#         return loss.mean()
+# criterion = FocalLoss(alpha=1, gamma=2)
+
+# Optimiser
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
 
 # Training loop
-def train(num_epochs=10):
+def train(num_epochs=15):
     history = []
 
     for epoch in range(num_epochs):
@@ -84,13 +113,14 @@ def train(num_epochs=10):
             f"Epoch [{epoch + 1}] Avg Loss: {average_loss:.4f}, Accuracy: {accuracy:.2f}%"
         )
 
-    # Save training log
+    # Save training results
     pd.DataFrame(history).to_csv(
         os.path.join(OUTPUT_DIR, "training_log.csv"), index=False
     )
-
-    # Save model
-    torch.save(model.state_dict(), os.path.join(MODEL_DIR, "resnet18_skin.pt"))
+    torch.save(
+        model.state_dict(),
+        os.path.join(MODEL_DIR, "resnet18_skin_weighted_augmented.pt"),
+    )
     print("\nTraining complete.")
     print(f"Model saved to {MODEL_DIR}/resnet18_skin.pt")
     print(f"Training log saved to {OUTPUT_DIR}/training_log.csv")
@@ -99,5 +129,5 @@ def train(num_epochs=10):
 # Run training
 start = time.time()
 print("Starting training...")
-train(num_epochs=10)
+train(num_epochs=15)
 print(f"Training finished in {time.time() - start:.2f} seconds.")
