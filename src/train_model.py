@@ -8,7 +8,7 @@ from torchvision.models import ResNet18_Weights
 from dataset import SkinLesionDataset
 import pandas as pd
 
-# Device
+# Device setup
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
@@ -18,7 +18,7 @@ OUTPUT_DIR = "outputs"
 os.makedirs(MODEL_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Augmented transform for training
+# Transforms
 train_transform = transforms.Compose(
     [
         transforms.Resize((224, 224)),
@@ -28,8 +28,6 @@ train_transform = transforms.Compose(
         transforms.ToTensor(),
     ]
 )
-
-# Plain transform for validation
 val_transform = transforms.Compose(
     [transforms.Resize((224, 224)), transforms.ToTensor()]
 )
@@ -51,31 +49,18 @@ model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
 model.fc = nn.Linear(model.fc.in_features, 2)
 model = model.to(device)
 
-# --- Option A: Class-weighted CrossEntropyLoss ---
-weights = torch.tensor([1.0, 3.0], dtype=torch.float).to(device)
+# Weighted loss: more penalty for misclassifying malignant cases
+weights = torch.tensor([1.0, 3.5], dtype=torch.float).to(device)
 criterion = nn.CrossEntropyLoss(weight=weights)
-
-# --- Option B: Focal Loss (uncomment below to use) ---
-# class FocalLoss(nn.Module):
-#     def __init__(self, alpha=1, gamma=2):
-#         super().__init__()
-#         self.alpha = alpha
-#         self.gamma = gamma
-#         self.ce = nn.CrossEntropyLoss(reduction='none')
-#     def forward(self, input, target):
-#         logp = self.ce(input, target)
-#         p = torch.exp(-logp)
-#         loss = self.alpha * (1 - p) ** self.gamma * logp
-#         return loss.mean()
-# criterion = FocalLoss(alpha=1, gamma=2)
-
-# Optimiser
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
 
-# Training loop
-def train(num_epochs=15):
+# Training loop with early stopping
+def train(num_epochs=50, patience=5):
     history = []
+    best_accuracy = 0.0
+    epochs_since_improvement = 0
+    best_model_state = None
 
     for epoch in range(num_epochs):
         model.train()
@@ -105,29 +90,41 @@ def train(num_epochs=15):
 
         accuracy = 100 * correct / total
         average_loss = running_loss / len(train_loader)
-
-        epoch_result = {"epoch": epoch + 1, "loss": average_loss, "accuracy": accuracy}
-        history.append(epoch_result)
+        history.append({"epoch": epoch + 1, "loss": average_loss, "accuracy": accuracy})
 
         print(
             f"Epoch [{epoch + 1}] Avg Loss: {average_loss:.4f}, Accuracy: {accuracy:.2f}%"
         )
 
-    # Save training results
+        # Early stopping check
+        if accuracy > best_accuracy:
+            best_accuracy = accuracy
+            best_model_state = model.state_dict()
+            epochs_since_improvement = 0
+        else:
+            epochs_since_improvement += 1
+            print(f"No improvement for {epochs_since_improvement} epoch(s).")
+
+        if epochs_since_improvement >= patience:
+            print(
+                f"\nEarly stopping triggered after {epoch + 1} epochs (no improvement for {patience})."
+            )
+            break
+
+    # Save best model
+    torch.save(
+        best_model_state, os.path.join(MODEL_DIR, "resnet18_skin_weighted_earlystop.pt")
+    )
     pd.DataFrame(history).to_csv(
         os.path.join(OUTPUT_DIR, "training_log.csv"), index=False
     )
-    torch.save(
-        model.state_dict(),
-        os.path.join(MODEL_DIR, "resnet18_skin_weighted_augmented.pt"),
-    )
-    print("\nTraining complete.")
-    print(f"Model saved to {MODEL_DIR}/resnet18_skin.pt")
-    print(f"Training log saved to {OUTPUT_DIR}/training_log.csv")
+    print(f"\nTraining complete. Best Accuracy: {best_accuracy:.2f}%")
+    print(f"Model saved to models/resnet18_skin_weighted_earlystop.pt")
+    print(f"Training log saved to outputs/training_log.csv")
 
 
 # Run training
 start = time.time()
-print("Starting training...")
-train(num_epochs=15)
+print("Starting training with early stopping...")
+train(num_epochs=50, patience=5)
 print(f"Training finished in {time.time() - start:.2f} seconds.")
