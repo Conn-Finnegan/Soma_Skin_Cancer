@@ -23,7 +23,9 @@ val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
 # Load model
 model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
 model.fc = nn.Linear(model.fc.in_features, 2)
-model.load_state_dict(torch.load("models/resnet18_skin.pt", map_location=device))
+model.load_state_dict(
+    torch.load("models/resnet18_skin_weighted_earlystop.pt", map_location=device)
+)
 model.to(device)
 model.eval()
 
