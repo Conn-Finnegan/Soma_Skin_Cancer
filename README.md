@@ -1,6 +1,5 @@
 # Soma Skin Cancer Classifier
 
-![thumbnail](thumbnail.png)
 
 **Soma** is a privacy-focused AI tool for classifying dermoscopic images of skin lesions as **benign** or **malignant**. It leverages a fine-tuned ResNet‑18 model and provides Grad‑CAM visualisations for interpretability.
 
