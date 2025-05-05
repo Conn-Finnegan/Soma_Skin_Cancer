@@ -5,12 +5,12 @@ __pycache__/
 
 # Dataset images
 data/
-
+test_images/
 # Model files
 models/*.pt
 
 # Output logs
-outputs/*.csv
+outputs/
 
 # System/IDE files
 .DS_Store
