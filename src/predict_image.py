@@ -12,6 +12,7 @@ import cv2
 model_path = "models/resnet18_skin_weighted_earlystop.pt"
 input_folder = "test_images"
 output_folder = "outputs"
+os.makedirs(output_folder, exist_ok=True)
 max_images = 20
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class_names = ["benign", "malignant"]
