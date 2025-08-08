@@ -41,15 +41,15 @@ def generate_gradcam(img_tensor, predicted_class):
     gradients = []
     activations = []
 
-    def backward_hook(module, grad_input, grad_output):
-        gradients.append(grad_output[0])
-
     def forward_hook(module, input, output):
         activations.append(output)
 
+    def backward_hook(module, grad_input, grad_output):
+        gradients.append(grad_output[0])
+
     final_conv = model.layer3[1].conv2  # Earlier layer = sharper Grad-CAM
     forward_handle = final_conv.register_forward_hook(forward_hook)
-    backward_handle = final_conv.register_backward_hook(backward_hook)
+    backward_handle = final_conv.register_full_backward_hook(backward_hook)
 
     output = model(img_tensor)
     class_score = output[0, predicted_class]
@@ -69,6 +69,10 @@ def generate_gradcam(img_tensor, predicted_class):
 
     if np.max(cam) != 0:
         cam = cam / np.max(cam)  # Safe division
+
+    forward_handle.remove()
+    backward_handle.remove()
+
     return cam
 
 
