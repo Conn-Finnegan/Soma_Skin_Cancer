@@ -51,7 +51,7 @@
 ### 2. Run evaluation on validation set
 
 ```bash
-python src/evaluate_model.py
+python src/evaluate.py
 ```
 
 ### 3. Predict on custom images
