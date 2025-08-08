@@ -37,6 +37,20 @@
    pip install -r requirements.txt
    ```
 
+## 📦 Data Preparation
+
+1. Download the [HAM10000 dataset](https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000) from Kaggle.
+2. Place the extracted `HAM10000_images_part_1`, `HAM10000_images_part_2`, and `HAM10000_metadata.csv` into the `data/` directory.
+3. Generate training and validation splits:
+
+   ```bash
+   python src/load_data.py
+   ```
+
+   This command creates `data/train.csv` and `data/val.csv`.
+
+> **Note:** Raw dataset files should remain outside version control. The `data/` directory is ignored via `.gitignore`.
+
 ## 🚀 Usage
 
 ### 1. Download or train the model

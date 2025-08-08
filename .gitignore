@@ -3,9 +3,10 @@ venv/
 __pycache__/
 *.pyc
 
-# Dataset images
+# Dataset (Kaggle HAM10000) files
 data/
 test_images/
+
 # Model files
 models/*.pt
 
@@ -14,4 +15,4 @@ outputs/
 
 # System/IDE files
 .DS_Store
-.vscode/
+.vscode
