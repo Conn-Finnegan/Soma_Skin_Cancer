@@ -1,135 +1,91 @@
 # Soma Skin Cancer Classifier
 
+Soma is a privacy‑focused tool that classifies dermoscopic images of skin lesions as **benign** or **malignant** using a fine‑tuned ResNet‑18 model. The current model reaches about **92% accuracy** and produces Grad‑CAM heatmaps to show what the network sees.
 
-**Soma** is a privacy-focused AI tool for classifying dermoscopic images of skin lesions as **benign** or **malignant**. It leverages a fine-tuned ResNet‑18 model and provides Grad‑CAM visualisations for interpretability.
+## Project Overview
+- Trained on the HAM10000 dataset to distinguish benign from malignant lesions.
+- Fine‑tuned ResNet‑18 achieves roughly 92% accuracy on a held‑out test set.
+- Generates Grad‑CAM heatmaps for transparent predictions and includes scripts for training, evaluation, and demos.
 
-## 🔍 Project Overview
+## Quick Start
+Follow these steps to run predictions with the pretrained model.
 
-* **Model**: ResNet‑18 (pretrained on ImageNet, final layer adjusted for 2 classes)
-* **Dataset**: HAM10000 dermoscopic image dataset
-* **Accuracy**: \~89% overall
-* **Malignant Recall**: \~78% (prioritised for safety)
-* **Explainability**: Grad‑CAM heatmap overlays
-* **Privacy**: All inference runs in-memory; no images are stored or logged
-* **Deployment**:
-
-  * **Hugging Face Space**: [Try Soma Live](https://huggingface.co/spaces/Conn-Cerberus/Soma_Skin_Cancer_Classifier)
-  * **PyTorch**: `skin_cancer_resnet18_version1.pt`
-  * **Core ML**: `skin_cancer_resnet18_v1.mlmodel` (for iOS app integration)
-
-## ⚙️ Installation
-
-1. **Clone the repo**
-
+1. **Clone the repository**
    ```bash
    git clone https://github.com/Conn-Finnegan/Soma_Skin_Cancer.git
    cd Soma_Skin_Cancer
    ```
 2. **Create and activate a virtual environment**
-
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    ```
 3. **Install dependencies**
-
    ```bash
    pip install -r requirements.txt
    ```
+4. **Download the pretrained model**
+   * Place `skin_cancer_resnet18_version1.pt` in the `models/` folder.
+5. **Run predictions**
+   * Add up to 20 `.jpg` or `.png` files to `test_images/`.
+   * Execute:
+     ```bash
+     python src/predict_batch.py
+     ```
+   * Predictions print to the console and Grad‑CAM overlays are saved to `outputs/`.
 
-## 📦 Data Preparation
-
-1. Download the [HAM10000 dataset](https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000) from Kaggle.
-2. Place the extracted `HAM10000_images_part_1`, `HAM10000_images_part_2`, and `HAM10000_metadata.csv` into the `data/` directory.
-3. Generate training and validation splits:
-
+## Train the Model Yourself
+1. **Prepare the data**
+   * Download the [HAM10000 dataset](https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000).
+   * Copy `HAM10000_images_part_1`, `HAM10000_images_part_2`, and `HAM10000_metadata.csv` into a new `data/` directory.
+   * Generate train/validation splits:
+     ```bash
+     python src/load_data.py
+     ```
+2. **Train**
    ```bash
-   python src/load_data.py
+   python src/train_model.py
+   ```
+3. **Evaluate**
+   ```bash
+   python src/evaluate.py
    ```
 
-   This command creates `data/train.csv` and `data/val.csv`.
-
-> **Note:** Raw dataset files should remain outside version control. The `data/` directory is ignored via `.gitignore`.
-
-## 🚀 Usage
-
-### 1. Download or train the model
-
-* **Pretrained model**: Place `skin_cancer_resnet18_version1.pt` in the `models/` folder.
-* **To train from scratch**, adjust `src/train_model.py` and run:
-
-  ```bash
-  python src/train_model.py
-  ```
-
-### 2. Run evaluation on validation set
-
-```bash
-python src/evaluate.py
-```
-
-### 3. Predict on custom images
-
-```bash
-python src/predict_batch.py
-```
-
-* Processes up to 20 images in `test_images/`
-* Outputs predictions and saves Grad‑CAM overlays to `outputs/`
-
-### 4. Launch Hugging Face Space locally
-
+## Launch the Web Demo
 ```bash
 cd app
 pip install -r requirements.txt
 python app.py
 ```
 
-## 📱 iOS App Integration
-
-* Convert to Core ML:
-
+## iOS App Integration
+* Convert the model to Core ML:
   ```bash
   python convert_model.py
   ```
-* Integrate `skin_cancer_resnet18_v1.mlmodel` into your SwiftUI Xcode project.
+* Use `skin_cancer_resnet18_v1.mlmodel` in your SwiftUI project.
 
-## 📄 File Structure
-
-```
-├── app/                    # Gradio web app for demo
-│   ├── app.py
-│   └── requirements.txt
-├── data/                   # Optional: raw dataset or test images
-├── models/                 # Model files (.pt, .mlmodel)
-├── outputs/                # Saved Grad-CAM overlays and logs
-├── src/                    # Training, evaluation, and prediction scripts
-│   ├── train_model.py
-│   ├── evaluate_model.py
-│   ├── predict_batch.py
-│   └── convert_model.py
-├── thumbnail.png           # Project thumbnail
-├── README.md
-└── requirements.txt        # Python dependencies
+## Project Structure
+```text
+├── app/                    # Gradio demo
+├── data/                   # Dataset (ignored by git)
+├── models/                 # Pretrained or trained models
+├── outputs/                # Grad-CAM images and logs
+├── src/                    # Training and inference scripts
+└── tests/                  # Unit tests
 ```
 
-## 🔐 Privacy Notice
+## Privacy
+All image processing occurs locally in memory—no images or personal data are stored or sent elsewhere.
 
-> **All image processing is done locally and in-memory.**
-> No images, logs, or personal data are stored or transmitted.
+## License
+GNU General Public License v3.0
 
-## 📝 License
-
-GNU General Public License v3.0 
-
-## 🙋‍♂️ Author
-
-**Conn Finnegan**
-
-* GitHub: [@Conn-Finnegan](https://github.com/Conn-Finnegan)
-* LinkedIn: [Conn Finnegan](https://www.linkedin.com/in/conn-finnegan-09a98124b/)
+## Author
+**Conn Finnegan**  
+GitHub: [@Conn-Finnegan](https://github.com/Conn-Finnegan)  
+LinkedIn: [Conn Finnegan](https://www.linkedin.com/in/conn-finnegan-09a98124b/)
 
 ---
-
-> Powered by PyTorch, Gradio & Hugging Face Spaces
-> © 2025 Conn Finnegan
+Powered by PyTorch, Gradio & Hugging Face Spaces  
+© 2025 Conn Finnegan
