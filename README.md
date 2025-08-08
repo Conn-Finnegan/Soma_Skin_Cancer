@@ -25,14 +25,19 @@ Follow these steps to run predictions with the pretrained model.
    pip install -r requirements.txt
    ```
 4. **Download the pretrained model**
-   * Place `skin_cancer_resnet18_version1.pt` in the `models/` folder.
+   * For Python scripts, download the PyTorch weights file
+     `resnet18_skin_weighted_earlystop.pt` and place it in the `models/`
+     folder. This repository also includes
+     `skin_cancer_resnet18_v1.mlmodel` for iOS apps, but that file is not
+     used by the Python inference code.
 5. **Run predictions**
    * Add up to 20 `.jpg` or `.png` files to `test_images/`.
    * Execute:
      ```bash
-     python src/predict_batch.py
+     python src/predict_image.py
      ```
-   * Predictions print to the console and Grad‑CAM overlays are saved to `outputs/`.
+   * Predictions print to the console and Grad‑CAM overlays are saved to
+     `outputs/`.
 
 ## Train the Model Yourself
 1. **Prepare the data**
@@ -51,13 +56,6 @@ Follow these steps to run predictions with the pretrained model.
    python src/evaluate.py
    ```
 
-## Launch the Web Demo
-```bash
-cd app
-pip install -r requirements.txt
-python app.py
-```
-
 ## iOS App Integration
 * Convert the model to Core ML:
   ```bash
@@ -67,7 +65,6 @@ python app.py
 
 ## Project Structure
 ```text
-├── app/                    # Gradio demo
 ├── data/                   # Dataset (ignored by git)
 ├── models/                 # Pretrained or trained models
 ├── outputs/                # Grad-CAM images and logs
