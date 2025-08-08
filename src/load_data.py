@@ -13,6 +13,9 @@ IMG_DIRS = [
 ]
 CSV_PATH = os.path.join(DATA_DIR, "HAM10000_metadata.csv")
 
+# Flag to control saving train/validation splits
+save_splits = True
+
 # Load metadata
 df = pd.read_csv(CSV_PATH)
 
@@ -52,6 +55,7 @@ train_df, val_df = train_test_split(
 print(f"Total images: {len(df)}")
 print(f"Training: {len(train_df)}, Validation: {len(val_df)}")
 
-# Optional: Save splits
-train_df.to_csv(os.path.join(DATA_DIR, "train.csv"), index=False)
-val_df.to_csv(os.path.join(DATA_DIR, "val.csv"), index=False)
+if save_splits:
+    # Save splits
+    train_df.to_csv(os.path.join(DATA_DIR, "train.csv"), index=False)
+    val_df.to_csv(os.path.join(DATA_DIR, "val.csv"), index=False)
